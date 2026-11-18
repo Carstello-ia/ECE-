@@ -24,6 +24,7 @@ import engine.Achievement;
 import engine.DamageDimEffect;
 import engine.GameEvents;
 import engine.GlitchEffect;
+import engine.HudAnimator;
 import engine.PurchaseManager;
 import engine.MeteorManager;
 import engine.ScreenShake;
@@ -240,6 +241,8 @@ public class GameScreen extends Screen {
 	private DamageDimEffect damageDim;
 	/** Glitch effect for low health. */
 	private GlitchEffect glitch;
+	/** HUD animations: score count-up, life blink, level pulse, etc. */
+	private HudAnimator hudAnimator;
 	/** Screen shake when an enemy is destroyed. */
 	private ScreenShake screenShake;
 	/** Bonus meteor and its diamonds. AUTHORED BY: VFX TEAM (Effection) */
@@ -366,6 +369,7 @@ public class GameScreen extends Screen {
         new java.awt.Color(150, 0, 0));  //new update dim effect
 		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 		this.glitch = new GlitchEffect();
+		this.hudAnimator = new HudAnimator();
 		this.screenShake = new ScreenShake();
 		this.meteors = new MeteorManager(this.level, this.width, this.height,SEPARATION_LINE_HEIGHT);
 		this.pointsEffect = new PointsEffect(SEPARATION_LINE_HEIGHT);
@@ -851,18 +855,35 @@ if (this.midBoss != null) {
 		// Points popups (above the dim, under the HUD). AUTHORED BY: VFX TEAM (Effection)
 		drawManager.drawPointsEffect(this, this.pointsEffect);
 
-		// Interface.
-		drawManager.drawScore(this, this.score);
-		drawManager.drawLives(this, this.lives);
-		drawManager.drawLevel(this, this.level);
+		// Interface, with HUD animations (Requirement 8 - Gameplay HUD).
+		long now = System.currentTimeMillis();
+		int coins = CurrencyManager.getInstance().getCoins();
+		int diamonds = engine.DiamondManager.getInstance().getDiamonds();
+		this.hudAnimator.update(now, this.score, this.lives, coins, diamonds);
+		if (this.inputDelay.checkFinished())
+			this.hudAnimator.startLevel(now);
+
+		drawManager.drawScore(this, this.hudAnimator.getDisplayedScore(),
+				this.hudAnimator.isScoreFlashing(now) ? Color.YELLOW
+						: Color.GREEN);
+		drawManager.drawLives(this, this.lives,
+				this.hudAnimator.isLowLifePulseOn(now) ? Color.RED
+						: Color.WHITE,
+				this.hudAnimator.getGainedSlotToHide(now),
+				this.hudAnimator.getLostSlotToDraw(now));
+		drawManager.drawLevel(this, this.level,
+				this.hudAnimator.isLevelPulseOn(now) ? Color.YELLOW
+						: Color.GREEN);
 		// Explicit Y (36, not the 25 default): the level indicator now
 		// sits centred at y=14, and the coin icon is tall enough that at
 		// y=25 it climbs into the level text above it. Dropping it to its
 		// own row below clears both.
-		drawManager.drawCoinBalance(this, CurrencyManager.getInstance()
-				.getCoins(), 36);
-		drawManager.drawDiamonds(this, engine.DiamondManager.getInstance()
-				.getDiamonds());
+		drawManager.drawCoinBalance(this, coins, 36,
+				this.hudAnimator.isCoinFlashing(now) ? Color.YELLOW
+						: Color.WHITE);
+		drawManager.drawDiamonds(this, diamonds,
+				this.hudAnimator.isDiamondFlashing(now) ? Color.YELLOW
+						: Color.WHITE);
 		drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
 		drawManager.drawItemHud(this, this.items); // Item System (Team CS)
 		// Boss health bar: fixed overlay a row below the item HUD slots
