@@ -604,6 +604,25 @@ public final class DrawManager {
 	 */
 	public void drawCoinBalance(final Screen screen, final int coins,
 								final int positionY) {
+		drawCoinBalance(screen, coins, positionY, Color.WHITE);
+	}
+
+	/**
+	 * Same as {@link #drawCoinBalance(Screen, int, int)} with a custom
+	 * colour for the amount, used by the HUD to flash it on a gain
+	 * (Requirement 8 - Gameplay HUD).
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param coins
+	 *            Coin balance to display.
+	 * @param positionY
+	 *            Baseline Y coordinate of the text.
+	 * @param textColor
+	 *            Colour of the amount.
+	 */
+	public void drawCoinBalance(final Screen screen, final int coins,
+								final int positionY, final Color textColor) {
 		final int iconSize = 14;
 		final int iconTextGap = 6;
 
@@ -616,7 +635,7 @@ public final class DrawManager {
 		backBufferGraphics.setColor(Color.YELLOW);
 		backBufferGraphics.fillOval(startX, positionY - iconSize + 1,
 				iconSize, iconSize);
-		backBufferGraphics.setColor(Color.WHITE);
+		backBufferGraphics.setColor(textColor);
 		backBufferGraphics.drawString(balanceString, startX + iconSize
 				+ iconTextGap, positionY);
 	}
@@ -775,6 +794,22 @@ public final class DrawManager {
 	 *            Current score.
 	 */
 	public void drawScore(final Screen screen, final int score) {
+		drawScore(screen, score, Color.GREEN);
+	}
+
+	/**
+	 * Same as {@link #drawScore(Screen, int)} with a custom colour for the
+	 * value, used by the HUD to flash it when the score goes up.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param score
+	 *            Score to display.
+	 * @param valueColor
+	 *            Colour of the value.
+	 */
+	public void drawScore(final Screen screen, final int score,
+			final Color valueColor) {
 		int textY = 25;
 
 		backBufferGraphics.setFont(fontRegular);
@@ -789,7 +824,7 @@ public final class DrawManager {
 		backBufferGraphics.setColor(Color.WHITE);
 		backBufferGraphics.drawString(label, labelX, textY);
 
-		backBufferGraphics.setColor(Color.GREEN);
+		backBufferGraphics.setColor(valueColor);
 		backBufferGraphics.drawString(scoreString, scoreX, textY);
 	}
 
@@ -807,14 +842,45 @@ public final class DrawManager {
 	private static final int LIVES_ICON_SPACING = 35;
 
 	public void drawLives(final Screen screen, final int lives) {
+		drawLives(screen, lives, Color.WHITE, -1, -1);
+	}
+
+	/**
+	 * Draws the lives counter with HUD feedback (Requirement 8 - Gameplay
+	 * HUD): a custom label colour for the low-life warning, one icon that
+	 * can be hidden so a freshly gained life blinks in, and a red frame on
+	 * the slot of a life that was just lost.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param lives
+	 *            Current lives.
+	 * @param labelColor
+	 *            Colour of the "LIVES" label.
+	 * @param hiddenSlot
+	 *            Slot index (0-based) not to draw this frame, or -1.
+	 * @param lostSlot
+	 *            Slot index (0-based) to frame in red this frame, or -1.
+	 */
+	public void drawLives(final Screen screen, final int lives,
+			final Color labelColor, final int hiddenSlot,
+			final int lostSlot) {
 		backBufferGraphics.setFont(fontRegular);
-		backBufferGraphics.setColor(Color.WHITE);
+		backBufferGraphics.setColor(labelColor);
 		backBufferGraphics.drawString("LIVES", 20, 25);
 
 		Ship dummyShip = new Ship(0, 0, Core.getSelectedShipType());
 		for (int i = 0; i < lives; i++)
-			drawEntity(dummyShip, 20 + LIVES_LABEL_WIDTH
-					+ LIVES_ICON_SPACING * i, 10);
+			if (i != hiddenSlot)
+				drawEntity(dummyShip, 20 + LIVES_LABEL_WIDTH
+						+ LIVES_ICON_SPACING * i, 10);
+
+		if (lostSlot >= 0) {
+			backBufferGraphics.setColor(Color.RED);
+			backBufferGraphics.drawRect(20 + LIVES_LABEL_WIDTH
+					+ LIVES_ICON_SPACING * lostSlot - 2, 8,
+					dummyShip.getWidth() + 3, dummyShip.getHeight() + 3);
+		}
 	}
 
 	/** Baseline Y of the top-centre level indicator, kept off y=25 so it
@@ -832,6 +898,22 @@ public final class DrawManager {
 	 *            Current game level.
 	 */
 	public void drawLevel(final Screen screen, final int level) {
+		drawLevel(screen, level, Color.GREEN);
+	}
+
+	/**
+	 * Same as {@link #drawLevel(Screen, int)} with a custom colour for the
+	 * value, used by the HUD to pulse it when the level starts.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param level
+	 *            Current game level.
+	 * @param valueColor
+	 *            Colour of the value.
+	 */
+	public void drawLevel(final Screen screen, final int level,
+			final Color valueColor) {
 		String label = "LEVEL";
 		String valueString = Integer.toString(level);
 
@@ -845,7 +927,7 @@ public final class DrawManager {
 
 		backBufferGraphics.setColor(Color.WHITE);
 		backBufferGraphics.drawString(label, labelX, LEVEL_INDICATOR_Y);
-		backBufferGraphics.setColor(Color.GREEN);
+		backBufferGraphics.setColor(valueColor);
 		backBufferGraphics.drawString(valueString, valueX, LEVEL_INDICATOR_Y);
 	}
 	/** Y offset of the diamond counter below the score line. */
@@ -868,6 +950,22 @@ public final class DrawManager {
 	 *            Current diamond balance to display.
 	 */
 	public void drawDiamonds(final Screen screen, final int diamonds) {
+		drawDiamonds(screen, diamonds, Color.WHITE);
+	}
+
+	/**
+	 * Same as {@link #drawDiamonds(Screen, int)} with a custom colour for
+	 * the amount, used by the HUD to flash it on a gain.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param diamonds
+	 *            Current diamond balance to display.
+	 * @param textColor
+	 *            Colour of the amount.
+	 */
+	public void drawDiamonds(final Screen screen, final int diamonds,
+			final Color textColor) {
 		String valueString = Integer.toString(diamonds);
 		int textY = 25 + DIAMONDS_Y_OFFSET;
 		int startX = screen.getWidth() - 60;
@@ -881,7 +979,7 @@ public final class DrawManager {
 		backBufferGraphics.setColor(Color.CYAN);
 		backBufferGraphics.fillPolygon(xPoints, yPoints, 4);
 		backBufferGraphics.setFont(fontRegular);
-		backBufferGraphics.setColor(Color.WHITE);
+		backBufferGraphics.setColor(textColor);
 		backBufferGraphics.drawString(valueString, startX + DIAMOND_ICON_SIZE
 				+ DIAMOND_ICON_GAP, textY);
 	}
