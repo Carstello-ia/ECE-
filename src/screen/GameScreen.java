@@ -243,6 +243,8 @@ public class GameScreen extends Screen {
 	private GlitchEffect glitch;
 	/** HUD animations: score count-up, life blink, level pulse, etc. */
 	private HudAnimator hudAnimator;
+	/** Animated coin / diamond balances (Team ECE - KAN-10). */
+	private engine.CurrencyHud currencyHud;
 	/** Screen shake when an enemy is destroyed. */
 	private ScreenShake screenShake;
 	/** Bonus meteor and its diamonds. AUTHORED BY: VFX TEAM (Effection) */
@@ -370,6 +372,7 @@ public class GameScreen extends Screen {
 		GameEvents.subscribe(GameEvents.Type.PLAYER_HIT, this.damageDim);
 		this.glitch = new GlitchEffect();
 		this.hudAnimator = new HudAnimator();
+		this.currencyHud = new engine.CurrencyHud();
 		this.screenShake = new ScreenShake();
 		this.meteors = new MeteorManager(this.level, this.width, this.height,SEPARATION_LINE_HEIGHT);
 		this.pointsEffect = new PointsEffect(SEPARATION_LINE_HEIGHT);
@@ -874,16 +877,11 @@ if (this.midBoss != null) {
 		drawManager.drawLevel(this, this.level,
 				this.hudAnimator.isLevelPulseOn(now) ? Color.YELLOW
 						: Color.GREEN);
-		// Explicit Y (36, not the 25 default): the level indicator now
-		// sits centred at y=14, and the coin icon is tall enough that at
-		// y=25 it climbs into the level text above it. Dropping it to its
-		// own row below clears both.
-		drawManager.drawCoinBalance(this, coins, 36,
-				this.hudAnimator.isCoinFlashing(now) ? Color.YELLOW
-						: Color.WHITE);
-		drawManager.drawDiamonds(this, diamonds,
-				this.hudAnimator.isDiamondFlashing(now) ? Color.YELLOW
-						: Color.WHITE);
+		// Coin and diamond balances: rolling counter, +N/-N popup and icon
+		// pulse (Team ECE - KAN-10). Sits on its own row at y=36, below
+		// the level indicator.
+		this.currencyHud.update(coins, diamonds, now);
+		drawManager.drawCurrencyHud(this, this.currencyHud);
 		drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
 		drawManager.drawItemHud(this, this.items); // Item System (Team CS)
 		// Boss health bar: fixed overlay a row below the item HUD slots
