@@ -1836,6 +1836,20 @@ public final class DrawManager {
 			effect.draw(backBufferGraphics, screen.getWidth(), fontRegular);
 	}
 
+	/**
+	 * Draws the animated in-game coin and diamond balances (Team ECE -
+	 * KAN-10). The shop and Cash Out screens keep using drawCoinBalance /
+	 * drawDiamondBalance.
+	 *
+	 * @param screen Screen to draw on.
+	 * @param hud    Balance HUD state, updated by the game screen.
+	 */
+	public void drawCurrencyHud(final Screen screen, final CurrencyHud hud) {
+		if (hud != null)
+			hud.draw(backBufferGraphics, screen.getWidth(), fontRegular,
+					System.currentTimeMillis());
+	}
+
 	/** Point size of the small text used in the shop and Customize panels. */
 	private static final float SMALL_FONT_SIZE = 8f;
 	/** Small version of the regular game font, made on first use. */
