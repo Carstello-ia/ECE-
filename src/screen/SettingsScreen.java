@@ -21,8 +21,9 @@ public class SettingsScreen extends Screen {
 	private final SoundManager soundManager = SoundManager.getInstance();
 	/** Current selected menu item. */
 	private int currentMenuItem = 0;
-	/** Rows that can be selected: BGM, SFX, HUD opacity, HUD size. */
-	private static final int SELECTABLE_ROWS = 4;
+	/** Rows that can be selected: BGM, SFX, HUD opacity, HUD size, HUD
+	 * animations. */
+	private static final int SELECTABLE_ROWS = 5;
 	/** Gameplay HUD options (Team ECE - KAN-28). */
 	private final HudSettings hudSettings = HudSettings.getInstance();
 
@@ -71,6 +72,8 @@ public class SettingsScreen extends Screen {
 			this.hudSettings.stepOpacity(direction);
 		else if (this.currentMenuItem == 3)
 			this.hudSettings.stepSize(direction);
+		else if (this.currentMenuItem == 4)
+			this.hudSettings.setAnimated(direction > 0); // KAN-41
 		else
 			adjustSelectedVolume(10 * direction);
 	}
@@ -162,6 +165,9 @@ public class SettingsScreen extends Screen {
 		this.drawManager.drawMenuRow(this, "HUD Size: "
 				+ this.hudSettings.getSize().getLabel(), rowBaseline(3),
 				currentMenuItem == 3);
+		this.drawManager.drawMenuRow(this, "HUD Animations: "
+				+ (this.hudSettings.isAnimated() ? "ON" : "OFF"),
+				rowBaseline(4), currentMenuItem == 4);
 
 		this.drawManager.drawMenuRow(this, m2, rowBaseline(5), false);
 
