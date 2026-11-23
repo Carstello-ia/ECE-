@@ -930,6 +930,132 @@ public final class DrawManager {
 		backBufferGraphics.setColor(valueColor);
 		backBufferGraphics.drawString(valueString, valueX, LEVEL_INDICATOR_Y);
 	}
+	/** Baseline Y of the best score, above the score (KAN-24). */
+	private static final int BEST_SCORE_Y = 11;
+	/** Gold colour of a beaten record. */
+	private static final Color RECORD_GOLD = new Color(255, 200, 40);
+
+	/**
+	 * Draws the score to beat above the current score (Requirement 8 -
+	 * Gameplay HUD, KAN-24): "BEST 1234" in grey, gold once the run has
+	 * passed it, and a blinking "NEW BEST!" right after.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param best
+	 *            Best score to show.
+	 * @param beaten
+	 *            True once the run has passed the saved best score.
+	 * @param newBestShowing
+	 *            True while the "NEW BEST!" text replaces the value.
+	 * @param flashOn
+	 *            True on the "on" frames of the "NEW BEST!" blink.
+	 */
+	public void drawBestScore(final Screen screen, final int best,
+			final boolean beaten, final boolean newBestShowing,
+			final boolean flashOn) {
+		String text = newBestShowing ? "NEW BEST!" : "BEST " + best;
+		if (newBestShowing && !flashOn)
+			return;
+		int x = screen.getWidth() - SCORE_ZONE_MARGIN
+				- getSmallStringWidth(text);
+		drawSmallString(text, x, BEST_SCORE_Y,
+				beaten ? RECORD_GOLD : Color.GRAY);
+	}
+
+	/** Top Y of the extra-life bar, under the life icons (KAN-25). */
+	private static final int EXTRA_LIFE_BAR_Y = 31;
+	/** Height of the extra-life bar. */
+	private static final int EXTRA_LIFE_BAR_HEIGHT = 3;
+	/** Width of the extra-life bar (three life slots). */
+	private static final int EXTRA_LIFE_BAR_WIDTH = LIVES_ICON_SPACING * 3 - 9;
+
+	/**
+	 * Draws the progress toward the next extra life as a thin bar under the
+	 * life icons (Requirement 8 - Gameplay HUD, KAN-25). It flashes white
+	 * when a life is earned.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param progress
+	 *            Progress toward the next extra life, from 0 to 1.
+	 * @param flashOn
+	 *            True on the "on" frames of the earned-life flash.
+	 */
+	public void drawExtraLifeBar(final Screen screen, final float progress,
+			final boolean flashOn) {
+		int x = 20 + LIVES_LABEL_WIDTH;
+		int fill = Math.round(EXTRA_LIFE_BAR_WIDTH
+				* Math.max(0f, Math.min(1f, progress)));
+
+		backBufferGraphics.setColor(new Color(40, 60, 40));
+		backBufferGraphics.fillRect(x, EXTRA_LIFE_BAR_Y,
+				EXTRA_LIFE_BAR_WIDTH, EXTRA_LIFE_BAR_HEIGHT);
+		backBufferGraphics.setColor(flashOn ? Color.WHITE : Color.GREEN);
+		if (flashOn)
+			fill = EXTRA_LIFE_BAR_WIDTH;
+		backBufferGraphics.fillRect(x, EXTRA_LIFE_BAR_Y, fill,
+				EXTRA_LIFE_BAR_HEIGHT);
+	}
+
+	/** Colours of the combo text for multipliers x1 to x4 (KAN-23). */
+	private static final Color[] COMBO_COLORS = { Color.WHITE, Color.GREEN,
+			Color.YELLOW, new Color(255, 120, 30) };
+
+	/**
+	 * Draws the kill combo right-aligned under the HUD (Requirement 8 -
+	 * Gameplay HUD, KAN-23): "COMBO 7 x2", coloured by multiplier, growing
+	 * briefly on a new tier, with a thin bar for the time left before the
+	 * combo ends, and fading out once it ends.
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param combo
+	 *            Combo to show, 0 to draw nothing.
+	 * @param multiplier
+	 *            Score multiplier of that combo (1 to 4).
+	 * @param alpha
+	 *            Opacity, from 0 to 1.
+	 * @param scale
+	 *            Text scale (1 = normal size).
+	 * @param timeLeft
+	 *            Share of the combo window left, from 0 to 1.
+	 * @param baseline
+	 *            Baseline Y of the text.
+	 */
+	public void drawCombo(final Screen screen, final int combo,
+			final int multiplier, final float alpha, final float scale,
+			final float timeLeft, final int baseline) {
+		if (combo <= 0 || alpha <= 0f)
+			return;
+		Graphics2D g2d = (Graphics2D) backBufferGraphics;
+		java.awt.Composite oldComposite = g2d.getComposite();
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+				Math.min(1f, alpha)));
+
+		Color color = COMBO_COLORS[Math.max(0,
+				Math.min(COMBO_COLORS.length, multiplier) - 1)];
+		Font font = fontRegular.deriveFont(fontRegular.getSize2D() * scale);
+		FontMetrics metrics = g2d.getFontMetrics(font);
+		String label = "COMBO " + combo;
+		String mult = multiplier > 1 ? " x" + multiplier : "";
+		int right = screen.getWidth() - SCORE_ZONE_MARGIN;
+		int width = metrics.stringWidth(label + mult);
+		int x = right - width;
+
+		g2d.setFont(font);
+		g2d.setColor(Color.WHITE);
+		g2d.drawString(label, x, baseline);
+		g2d.setColor(color);
+		g2d.drawString(mult, x + metrics.stringWidth(label), baseline);
+
+		if (timeLeft > 0f) {
+			int barWidth = Math.round(width * timeLeft);
+			g2d.fillRect(right - barWidth, baseline + 3, barWidth, 2);
+		}
+		g2d.setComposite(oldComposite);
+	}
+
 	/** Y offset of the diamond counter below the score line. */
 	private static final int DIAMONDS_Y_OFFSET = 11;
 	/** Size, in pixels, of the diamond icon drawn next to the count. */

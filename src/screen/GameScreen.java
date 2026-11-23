@@ -96,6 +96,10 @@ public class GameScreen extends Screen {
 	private static final int ACHIEVEMENT_POPUP_SLIDE_OUT = 350;
 	/** Height of the interface separation line. */
 	private static final int SEPARATION_LINE_HEIGHT = 40;
+	/** Baseline Y of the combo text under the item HUD (Team ECE - KAN-23). */
+	private static final int COMBO_BASELINE = 72;
+	/** Baseline Y of the combo text under the boss health bar (KAN-23). */
+	private static final int COMBO_BASELINE_BOSS = 88;
 	/** Lives at or below this value start the glitch. */
 	private static final int LOW_HEALTH_LIVES = 1;
 	/** Low-life effect duration (ms). */
@@ -245,6 +249,12 @@ public class GameScreen extends Screen {
 	private HudAnimator hudAnimator;
 	/** Animated coin / diamond balances (Team ECE - KAN-10). */
 	private engine.CurrencyHud currencyHud;
+	/** Kill combo and score multiplier (Team ECE - KAN-23). */
+	private engine.ComboTracker comboTracker;
+	/** Score to beat and "NEW BEST!" flash (Team ECE - KAN-24). */
+	private engine.BestScoreTracker bestScoreTracker;
+	/** Extra life every few points (Team ECE - KAN-25). */
+	private engine.ExtraLifeTracker extraLifeTracker;
 	/** Screen shake when an enemy is destroyed. */
 	private ScreenShake screenShake;
 	/** Bonus meteor and its diamonds. AUTHORED BY: VFX TEAM (Effection) */
@@ -373,6 +383,10 @@ public class GameScreen extends Screen {
 		this.glitch = new GlitchEffect();
 		this.hudAnimator = new HudAnimator();
 		this.currencyHud = new engine.CurrencyHud();
+		this.comboTracker = new engine.ComboTracker();
+		this.bestScoreTracker = engine.BestScoreTracker.fromHighScores(
+				this.score, this.logger);
+		this.extraLifeTracker = new engine.ExtraLifeTracker(this.score);
 		this.screenShake = new ScreenShake();
 		this.meteors = new MeteorManager(this.level, this.width, this.height,SEPARATION_LINE_HEIGHT);
 		this.pointsEffect = new PointsEffect(SEPARATION_LINE_HEIGHT);
@@ -457,6 +471,7 @@ public class GameScreen extends Screen {
 		}
 
 		if (this.paused) {
+			this.comboTracker.holdDuringPause(System.currentTimeMillis()); // KAN-23
 			updatePauseMenu();
 			draw();
 			return;
@@ -532,6 +547,7 @@ public class GameScreen extends Screen {
 				&& !this.levelFinished && this.lives > 0
 				&& !this.ship.isDestroyed());
 		manageCollisions();
+		updateScoreHud(); // Team ECE - KAN-23/24/25
 		showScoreBoostPopups(); // Item System (Team CS)
 		cleanBullets();
 		updateParticles(); // AUTHORED BY: VFX TEAM (Effection)
@@ -784,6 +800,33 @@ public class GameScreen extends Screen {
 	}
 
 	/**
+	 * Adds the points of a destroyed enemy, multiplied by the kill combo
+	 * (Team ECE - KAN-23). The points popup keeps showing the base value;
+	 * the combo text shows the multiplier.
+	 *
+	 * @param points
+	 *            Points of the kill, item score boost included.
+	 */
+	private void addKillScore(final int points) {
+		int multiplier = this.comboTracker
+				.registerKill(System.currentTimeMillis());
+		this.score += points * multiplier;
+	}
+
+	/**
+	 * Per-frame update of the score HUD logic (Team ECE): combo timeout
+	 * (KAN-23), record check (KAN-24) and extra lives (KAN-25).
+	 */
+	private void updateScoreHud() {
+		long now = System.currentTimeMillis();
+		this.comboTracker.update(now);
+		this.bestScoreTracker.update(now, this.score);
+		if (this.lives > 0 && !this.levelFinished)
+			this.lives += this.extraLifeTracker.update(now, this.score,
+					this.lives, this.items.getMaxLives());
+	}
+
+	/**
 	 * Restarts the current level: score, lives, bullets shot, ships
 	 * destroyed and pending diamonds go back to what they were when the
 	 * level began, and every on-screen element is rebuilt from scratch.
@@ -869,11 +912,21 @@ if (this.midBoss != null) {
 		drawManager.drawScore(this, this.hudAnimator.getDisplayedScore(),
 				this.hudAnimator.isScoreFlashing(now) ? Color.YELLOW
 						: Color.GREEN);
+		// Score to beat, above the score (Team ECE - KAN-24).
+		drawManager.drawBestScore(this,
+				this.bestScoreTracker.getShownBest(this.score),
+				this.bestScoreTracker.isBeaten(),
+				this.bestScoreTracker.isNewBestShowing(now),
+				this.bestScoreTracker.isNewBestFlashOn(now));
 		drawManager.drawLives(this, this.lives,
 				this.hudAnimator.isLowLifePulseOn(now) ? Color.RED
 						: Color.WHITE,
 				this.hudAnimator.getGainedSlotToHide(now),
 				this.hudAnimator.getLostSlotToDraw(now));
+		// Progress toward the next extra life (Team ECE - KAN-25).
+		drawManager.drawExtraLifeBar(this,
+				this.extraLifeTracker.getProgress(this.score),
+				this.extraLifeTracker.isFullFlashOn(now));
 		drawManager.drawLevel(this, this.level,
 				this.hudAnimator.isLevelPulseOn(now) ? Color.YELLOW
 						: Color.GREEN);
@@ -887,6 +940,16 @@ if (this.midBoss != null) {
 		// Boss health bar: fixed overlay a row below the item HUD slots
 		// (y 43-59, Team CS), so the two never collide.
 		drawManager.drawBossHealthBar(this, this.midBoss, 64);
+		// Kill combo, right under the item HUD, or under the boss bar on
+		// boss stages (Team ECE - KAN-23).
+		if (!this.paused)
+			drawManager.drawCombo(this,
+					this.comboTracker.getShownCombo(now),
+					this.comboTracker.getShownMultiplier(now),
+					this.comboTracker.getAlpha(now),
+					this.comboTracker.getScale(now),
+					this.comboTracker.getTimeLeft(now),
+					this.midBoss != null ? COMBO_BASELINE_BOSS : COMBO_BASELINE);
 		// Low-health glitch (covers game + HUD). AUTHORED BY: VFX TEAM (Effection)
 		this.glitch.setEnabled(this.lowHealthActive && !this.levelFinished);
 		drawManager.drawGlitch(this, this.glitch);
@@ -998,6 +1061,7 @@ if (this.midBoss != null) {
 						this.lives--;
 						this.tookDamage = true; // Survivor tiers (Mantis)
 						GameEvents.emit(GameEvents.Type.PLAYER_HIT, this.lives); // AUTHORED BY: VFX TEAM (Effection)
+						this.comboTracker.breakCombo(System.currentTimeMillis()); // KAN-23
 						this.logger.info("Hit on player ship, " + this.lives
 								+ " lives remaining.");
 					}
@@ -1022,7 +1086,7 @@ if (this.midBoss != null) {
 					for (EnemyShip enemyShip : this.enemyShipFormation) {
 						if (!enemyShip.isDestroyed()
 								&& checkCollision(bullet, enemyShip)) {
-							this.score += this.items.scoreFor(enemyShip.getPointValue());
+							addKillScore(this.items.scoreFor(enemyShip.getPointValue()));
 							this.shipsDestroyed++;
 							spawnSparkles(enemyShip);
 							this.enemyShipFormation.destroy(enemyShip);
@@ -1043,7 +1107,7 @@ if (this.midBoss != null) {
 				if (this.enemyShipSpecial != null
 						&& !this.enemyShipSpecial.isDestroyed()
 						&& checkCollision(bullet, this.enemyShipSpecial)) {
-					this.score += this.items.scoreFor(this.enemyShipSpecial.getPointValue()); // score boost (Team CS)
+					addKillScore(this.items.scoreFor(this.enemyShipSpecial.getPointValue())); // score boost (Team CS), combo (Team ECE)
 					this.shipsDestroyed++;
 					spawnSparkles(this.enemyShipSpecial); // AUTHORED BY: VFX TEAM (Effection)
 					this.enemyShipSpecial.destroy();
