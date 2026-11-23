@@ -235,6 +235,9 @@ public final class ItemSystem {
     /** General entry point for the shop, HUD and effects teams. */
     public ItemAPI api() { return api; }
 
+    /** Lives cap of this run, equipped max-life item included (read by the HUD extra-life bar, Team ECE). */
+    public int getMaxLives() { return maxLives; }
+
     /**
      * Starts a level. The drop area comes from the screen size and the player ship position (floor = bottom of the ship).
      * Ends the previous level first if it was not ended.
