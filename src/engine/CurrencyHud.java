@@ -76,6 +76,9 @@ public class CurrencyHud {
 	private final Track coins = new Track();
 	/** Diamond counter. */
 	private final Track diamonds = new Track();
+	/** False to show balances instantly, with no roll, pulse or popup
+	 * (HUD animations setting, Team ECE - KAN-41). */
+	private boolean animated = true;
 
 	/**
 	 * Animation state of one balance counter.
@@ -142,6 +145,13 @@ public class CurrencyHud {
 		}
 
 		/** @return Value to print this frame. */
+		/** Shows the target value right away, with no pulse or popup. */
+		void snap() {
+			shown = target;
+			pulseStart = -1;
+			popupStart = -1;
+		}
+
 		int shownValue() {
 			return (int) Math.round(shown);
 		}
@@ -178,6 +188,10 @@ public class CurrencyHud {
 			final long now) {
 		this.coins.update(coinBalance, now);
 		this.diamonds.update(diamondBalance, now);
+		if (!this.animated) {
+			this.coins.snap();
+			this.diamonds.snap();
+		}
 	}
 
 	/**
@@ -188,6 +202,16 @@ public class CurrencyHud {
 	 * @param font  Regular game font.
 	 * @param now   Current time (ms).
 	 */
+	/**
+	 * Turns the balance animations on or off (Team ECE - KAN-41).
+	 *
+	 * @param animated
+	 *            False to show balances instantly.
+	 */
+	public void setAnimated(final boolean animated) {
+		this.animated = animated;
+	}
+
 	public void draw(final Graphics g, final int width, final Font font,
 			final long now) {
 		if (g == null || font == null)

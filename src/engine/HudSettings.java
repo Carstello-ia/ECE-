@@ -63,6 +63,8 @@ public final class HudSettings {
 	private int opacity = 100;
 	/** HUD size. */
 	private Size size = Size.NORMAL;
+	/** True to animate the HUD (count-ups, blinks, pulses, popups). */
+	private boolean animated = true;
 
 	/** Loads the saved options, or keeps the defaults. */
 	private HudSettings() {
@@ -97,6 +99,24 @@ public final class HudSettings {
 	 */
 	public Size getSize() {
 		return this.size;
+	}
+
+	/**
+	 * @return True if HUD animations are on (KAN-41).
+	 */
+	public boolean isAnimated() {
+		return this.animated;
+	}
+
+	/**
+	 * Turns HUD animations on or off and saves the choice (KAN-41).
+	 *
+	 * @param animated
+	 *            True to animate the HUD.
+	 */
+	public void setAnimated(final boolean animated) {
+		this.animated = animated;
+		save();
 	}
 
 	/**
@@ -157,6 +177,8 @@ public final class HudSettings {
 					this.opacity = step;
 			this.size = Size.valueOf(properties.getProperty("size",
 					"NORMAL").trim());
+			this.animated = !"false".equalsIgnoreCase(properties
+					.getProperty("animations", "true").trim());
 		} catch (IOException | IllegalArgumentException e) {
 			this.logger.warning("Couldn't load HUD settings, using defaults.");
 		}
@@ -168,6 +190,8 @@ public final class HudSettings {
 			Properties properties = new Properties();
 			properties.setProperty("opacity", Integer.toString(this.opacity));
 			properties.setProperty("size", this.size.name());
+			properties.setProperty("animations",
+					Boolean.toString(this.animated));
 			try (BufferedWriter writer = new BufferedWriter(
 					new OutputStreamWriter(new FileOutputStream(saveFile()),
 							Charset.forName("UTF-8")))) {

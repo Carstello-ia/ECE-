@@ -969,33 +969,37 @@ if (this.midBoss != null) {
 		// Player's HUD opacity and size, and the top bar background
 		// (Team ECE - KAN-26, KAN-28).
 		engine.HudSettings hudSettings = engine.HudSettings.getInstance();
+		// HUD animations can be turned off in the settings (KAN-41).
+		boolean animated = hudSettings.isAnimated();
 		drawManager.beginHud(hudSettings.getOpacity());
 		drawManager.drawHudPanel(this, SEPARATION_LINE_HEIGHT - 1);
 		drawManager.beginHudScale(this, hudSettings.getSize().getScale());
-		drawManager.drawScore(this, this.hudAnimator.getDisplayedScore(),
-				this.hudAnimator.isScoreFlashing(now) ? Color.YELLOW
-						: Color.GREEN);
+		drawManager.drawScore(this, animated
+				? this.hudAnimator.getDisplayedScore() : this.score,
+				animated && this.hudAnimator.isScoreFlashing(now)
+						? Color.YELLOW : Color.GREEN);
 		// Score to beat, above the score (Team ECE - KAN-24).
 		drawManager.drawBestScore(this,
 				this.bestScoreTracker.getShownBest(this.score),
 				this.bestScoreTracker.isBeaten(),
-				this.bestScoreTracker.isNewBestShowing(now),
+				animated && this.bestScoreTracker.isNewBestShowing(now),
 				this.bestScoreTracker.isNewBestFlashOn(now));
 		drawManager.drawLives(this, this.lives,
-				this.hudAnimator.isLowLifePulseOn(now) ? Color.RED
-						: Color.WHITE,
-				this.hudAnimator.getGainedSlotToHide(now),
-				this.hudAnimator.getLostSlotToDraw(now));
+				animated && this.hudAnimator.isLowLifePulseOn(now)
+						? Color.RED : Color.WHITE,
+				animated ? this.hudAnimator.getGainedSlotToHide(now) : -1,
+				animated ? this.hudAnimator.getLostSlotToDraw(now) : -1);
 		// Progress toward the next extra life (Team ECE - KAN-25).
 		drawManager.drawExtraLifeBar(this,
 				this.extraLifeTracker.getProgress(this.score),
-				this.extraLifeTracker.isFullFlashOn(now));
+				animated && this.extraLifeTracker.isFullFlashOn(now));
 		drawManager.drawLevel(this, this.level,
-				this.hudAnimator.isLevelPulseOn(now) ? Color.YELLOW
-						: Color.GREEN);
+				animated && this.hudAnimator.isLevelPulseOn(now)
+						? Color.YELLOW : Color.GREEN);
 		// Coin and diamond balances: rolling counter, +N/-N popup and icon
 		// pulse (Team ECE - KAN-10). Sits on its own row at y=36, below
 		// the level indicator.
+		this.currencyHud.setAnimated(animated);
 		this.currencyHud.update(coins, diamonds, now);
 		drawManager.drawCurrencyHud(this, this.currencyHud);
 		drawManager.endHudScale();
@@ -1010,8 +1014,9 @@ if (this.midBoss != null) {
 			drawManager.drawCombo(this,
 					this.comboTracker.getShownCombo(now),
 					this.comboTracker.getShownMultiplier(now),
-					this.comboTracker.getAlpha(now),
-					this.comboTracker.getScale(now),
+					animated ? this.comboTracker.getAlpha(now)
+							: (this.comboTracker.getCombo() > 0 ? 1f : 0f),
+					animated ? this.comboTracker.getScale(now) : 1f,
 					this.comboTracker.getTimeLeft(now),
 					this.midBoss != null ? COMBO_BASELINE_BOSS : COMBO_BASELINE);
 		drawManager.endHud();
