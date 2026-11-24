@@ -96,10 +96,6 @@ public class GameScreen extends Screen {
 	private static final int ACHIEVEMENT_POPUP_SLIDE_OUT = 350;
 	/** Height of the interface separation line. */
 	private static final int SEPARATION_LINE_HEIGHT = 40;
-	/** Baseline Y of the combo text under the item HUD (Team ECE - KAN-23). */
-	private static final int COMBO_BASELINE = 72;
-	/** Baseline Y of the combo text under the boss health bar (KAN-23). */
-	private static final int COMBO_BASELINE_BOSS = 88;
 	/** Lives at or below this value start the glitch. */
 	private static final int LOW_HEALTH_LIVES = 1;
 	/** Low-life effect duration (ms). */
@@ -621,6 +617,20 @@ public class GameScreen extends Screen {
 	}
 
 	/**
+	 * Baseline of the combo text: under the item HUD, under the boss bar on
+	 * boss stages, or under the achievement popup while one is shown, so
+	 * the popup never hides the combo (Team ECE - KAN-23, KAN-34).
+	 *
+	 * @return Baseline Y of the combo text.
+	 */
+	private int comboBaseline() {
+		if (this.unlockedAchievement != null)
+			return engine.HudLayout.COMBO_BASELINE_UNDER_POPUP;
+		return this.midBoss != null ? engine.HudLayout.COMBO_BASELINE_BOSS
+				: engine.HudLayout.COMBO_BASELINE;
+	}
+
+	/**
 	 * Counts the enemies of the formation still alive (Team ECE - KAN-29).
 	 *
 	 * @return Enemies alive, 0 on boss stages.
@@ -1007,7 +1017,8 @@ if (this.midBoss != null) {
 		drawManager.drawItemHud(this, this.items); // Item System (Team CS)
 		// Boss health bar: fixed overlay a row below the item HUD slots
 		// (y 43-59, Team CS), so the two never collide.
-		drawManager.drawBossHealthBar(this, this.midBoss, 64);
+		drawManager.drawBossHealthBar(this, this.midBoss,
+				engine.HudLayout.BOSS_BAR_Y);
 		// Kill combo, right under the item HUD, or under the boss bar on
 		// boss stages (Team ECE - KAN-23).
 		if (!this.paused)
@@ -1018,7 +1029,7 @@ if (this.midBoss != null) {
 							: (this.comboTracker.getCombo() > 0 ? 1f : 0f),
 					animated ? this.comboTracker.getScale(now) : 1f,
 					this.comboTracker.getTimeLeft(now),
-					this.midBoss != null ? COMBO_BASELINE_BOSS : COMBO_BASELINE);
+					comboBaseline());
 		drawManager.endHud();
 		// Low-health glitch (covers game + HUD). AUTHORED BY: VFX TEAM (Effection)
 		this.glitch.setEnabled(this.lowHealthActive && !this.levelFinished);
@@ -1030,7 +1041,8 @@ if (this.midBoss != null) {
 			drawManager.drawWaveProgress(this,
 					this.stageHud.getWaveRemaining(),
 					this.stageHud.getWaveTotal(),
-					this.stageHud.getWaveProgress());
+					this.stageHud.getWaveProgress(),
+					drawManager.getItemSlotsRight(this.items)); // KAN-34
 		}
 
 		if (this.paused) {
