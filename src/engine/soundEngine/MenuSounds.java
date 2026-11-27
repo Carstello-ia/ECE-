@@ -22,4 +22,14 @@ public final class MenuSounds {
         lastPlayed = now;
         SoundManager.getInstance().playSfx(Sound.MENU_MOVE);
     }
+
+    /** Plays the sound heard when a menu entry is confirmed. */
+    public static void playSelect() {
+        SoundManager.getInstance().playSfx(Sound.MENU_SELECT);
+    }
+
+    /** Plays the sound heard when going back or when an action is refused. */
+    public static void playCancel() {
+        SoundManager.getInstance().playSfx(Sound.MENU_CANCEL);
+    }
 }

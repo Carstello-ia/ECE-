@@ -586,8 +586,10 @@ public class GameScreen extends Screen {
 					// Count bullets, not trigger pulls: Two Way fires two at
 					// once, and accuracy is kills per bullet.
 					int bulletsBefore = this.bullets.size();
-					if (this.ship.shoot(this.bullets))
+					if (this.ship.shoot(this.bullets)) {
 						this.bulletsShot += this.bullets.size() - bulletsBefore;
+						SoundManager.getInstance().playSfx(Sound.SHOOT);
+					}
 				}
 				useItemSlots(); // Item System (Team CS)
 			}
@@ -642,7 +644,10 @@ public class GameScreen extends Screen {
 		updateParticles(); // AUTHORED BY: VFX TEAM (Effection)
 		this.lightningChain.update();
 		updateCoins();
-		this.pendingDiamonds += this.meteors.update(this.ship, this.lives > 0); // VFX TEAM (Effection): updates the meteor and its diamonds, returns the diamonds to be added to pending
+		int diamondsPicked = this.meteors.update(this.ship, this.lives > 0);
+		if (diamondsPicked > 0)
+			SoundManager.getInstance().playSfx(Sound.DIAMOND_PICKUP);
+		this.pendingDiamonds += diamondsPicked; // VFX TEAM (Effection): updates the meteor and its diamonds, returns the diamonds to be added to pending
 		handleItemEvents();
 		updateAchievementPopup();
 		draw();
@@ -920,6 +925,7 @@ public class GameScreen extends Screen {
 	 * Carries out whichever pause menu option the cursor was on.
 	 */
 	private void confirmPauseSelection() {
+		engine.soundEngine.MenuSounds.playSelect();
 		switch (this.pauseSelection) {
 			case RESUME:
 				resumeGameplay();
@@ -974,9 +980,13 @@ public class GameScreen extends Screen {
 		long now = System.currentTimeMillis();
 		this.comboTracker.update(now);
 		this.bestScoreTracker.update(now, this.score);
-		if (this.lives > 0 && !this.levelFinished)
-			this.lives += this.extraLifeTracker.update(now, this.score,
+		if (this.lives > 0 && !this.levelFinished) {
+			int extraLives = this.extraLifeTracker.update(now, this.score,
 					this.lives, this.items.getMaxLives());
+			if (extraLives > 0)
+				SoundManager.getInstance().playSfx(Sound.LEVEL_UP);
+			this.lives += extraLives;
+		}
 	}
 
 	/**
@@ -1531,6 +1541,7 @@ public class GameScreen extends Screen {
 	 */
 	private void coinGained(final Coin coin) {
 		GameEvents.emit(GameEvents.Type.COIN_GAINED, coin.getValue());
+		SoundManager.getInstance().playSfx(Sound.COIN_PICKUP);
 		if (engine.HudSettings.getInstance().isAnimated())
 			this.pickupPopups.add(coin.getValue(), Color.YELLOW,
 					coin.getPositionX() + coin.getWidth() / 2,
@@ -1665,6 +1676,7 @@ public class GameScreen extends Screen {
 		if (!this.achievementPopupQueue.isEmpty()) {
 			this.unlockedAchievement = this.achievementPopupQueue.remove();
 			this.achievementPopupStartedAt = System.currentTimeMillis();
+			SoundManager.getInstance().playSfx(Sound.ACHIEVEMENT);
 		}
 	}
 

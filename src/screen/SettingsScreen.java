@@ -110,6 +110,7 @@ public class SettingsScreen extends Screen {
 
 		if (this.inputDelay.checkFinished()) {
 			if (this.inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
+				engine.soundEngine.MenuSounds.playCancel();
 				this.draggingSlider = -1;
 				this.isRunning = false;
 			} else {

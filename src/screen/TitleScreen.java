@@ -262,6 +262,7 @@ public class TitleScreen extends Screen {
 	private void confirm() {
 		if (!this.selected.isEnabled())
 			return;
+		engine.soundEngine.MenuSounds.playSelect();
 
 		if (this.selected == MenuItem.EXIT) {
 			openExitConfirm();

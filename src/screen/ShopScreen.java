@@ -204,6 +204,7 @@ public class ShopScreen extends Screen {
 	/** Reacts to key presses. */
 	private void handleKeys() {
 		if (pressed(KeyEvent.VK_ESCAPE)) {
+			engine.soundEngine.MenuSounds.playCancel();
 			this.isRunning = false;
 		} else if (pressed(KeyEvent.VK_LEFT) || pressed(KeyEvent.VK_A)) {
 			showTab(Tab.values()[Math.floorMod(this.tab.ordinal() - 1,
@@ -353,12 +354,15 @@ public class ShopScreen extends Screen {
 				entry.discounted);
 		switch (result) {
 			case SUCCESS:
+				engine.soundEngine.SoundManager.getInstance()
+						.playSfx(engine.soundEngine.Sound.PURCHASE);
 				showMessage((item.isRepeatable() ? item.getName() + " is now"
 								+ " level " + purchases.getQuantity(item) + "! "
 								: "Bought " + item.getName() + "! ") + afterBuying(item),
 						Color.GREEN);
 				break;
 			case INSUFFICIENT_FUNDS:
+				engine.soundEngine.MenuSounds.playCancel();
 				showMessage("Not enough " + currency.getLabel() + " (need "
 						+ price + ").", TOO_EXPENSIVE);
 				break;
