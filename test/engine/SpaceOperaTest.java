@@ -48,4 +48,14 @@ public class SpaceOperaTest {
 		assertEquals(1f, SpaceOpera.streakLength(0.5f), 0.001f);
 		assertEquals(0f, SpaceOpera.streakLength(-1f), 0f);
 	}
+
+	@Test
+	public void briefingTypesOutThenStops() {
+		assertEquals(0, SpaceOpera.briefingCharsShown(0));
+		assertEquals(SpaceOpera.BRIEFING_CHARS_PER_SECOND,
+				SpaceOpera.briefingCharsShown(1000));
+		assertTrue(SpaceOpera.briefingLength() > 100);
+		assertTrue(SpaceOpera.briefingCharsShown(60000) >= SpaceOpera
+				.briefingLength());
+	}
 }

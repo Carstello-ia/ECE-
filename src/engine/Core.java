@@ -13,6 +13,7 @@ import screen.AchievementsScreen;
 import screen.CashOutScreen;
 import screen.GameScreen;
 import screen.HighScoreScreen;
+import screen.MissionBriefingScreen;
 import screen.ModeSelectScreen;
 import screen.ScoreScreen;
 import screen.Screen;
@@ -162,6 +163,13 @@ public final class Core {
 			case 2:
 				// Practice first; ESC returns to the menu without starting a run.
 				// Special modes go straight to their first stage.
+				// Space Opera opens with the mission briefing (KAN-57).
+				if (GameMode.current() == GameMode.SPACE_OPERA) {
+					currentScreen = new MissionBriefingScreen(width, height, FPS);
+					returnCode = frame.setScreen(currentScreen);
+					if (returnCode != 2)
+						break;
+				}
 				if (startLevel == 1 && GameMode.current().showsTutorial()) {
 					currentScreen = new TutorialScreen(width, height, FPS);
 					returnCode = frame.setScreen(currentScreen);
