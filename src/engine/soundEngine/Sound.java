@@ -72,6 +72,9 @@ public enum Sound {
 	BGM_BOSS("sounds/bgm_boss.wav", Category.BGM),
 	/** Blaster shot of the Space Opera mode (Team ECE - KAN-57). */
 	LASER("sounds/laser.wav", Category.SFX),
+	/** Orchestral fanfare of the Space Opera briefing (Team ECE - KAN-65). */
+	BGM_SPACE_OPERA_BRIEFING("sounds/bgm_space_opera_briefing.wav",
+			Category.BGM),
 	/** Heroic music of the Space Opera mode (Team ECE - KAN-55). */
 	BGM_SPACE_OPERA("sounds/bgm_space_opera.wav", Category.BGM),
 	/** Faster, louder boss music for the boss's last phase. */

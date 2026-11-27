@@ -10,8 +10,8 @@ import engine.soundEngine.SoundManager;
 
 /**
  * Mission briefing before the first stage of the Space Opera mode (Team
- * ECE - KAN-57): the story typed out line by line over the stars, with the
- * Space Opera music already playing.
+ * ECE - KAN-57): the story typed out line by line over the stars, over
+ * the orchestral fanfare (KAN-65).
  *
  * Space shows the whole text at once, then launches the run; esc goes back
  * to the menu.
@@ -49,7 +49,8 @@ public class MissionBriefingScreen extends Screen {
 	@Override
 	public final int run() {
 		this.openedAt = System.currentTimeMillis();
-		SoundManager.getInstance().playBgm(Sound.BGM_SPACE_OPERA);
+		// Orchestral fanfare for the opening (Team ECE - KAN-65).
+		SoundManager.getInstance().playBgm(Sound.BGM_SPACE_OPERA_BRIEFING);
 		super.run();
 		return this.returnCode;
 	}
