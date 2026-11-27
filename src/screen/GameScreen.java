@@ -602,7 +602,9 @@ public class GameScreen extends Screen {
 					int bulletsBefore = this.bullets.size();
 					if (this.ship.shoot(this.bullets)) {
 						this.bulletsShot += this.bullets.size() - bulletsBefore;
-						SoundManager.getInstance().playSfx(Sound.SHOOT);
+						// Space Opera: blaster sound instead (KAN-57).
+						SoundManager.getInstance().playSfx(this.spaceStars != null
+								? Sound.LASER : Sound.SHOOT);
 					}
 				}
 				useItemSlots(); // Item System (Team CS)
@@ -1066,6 +1068,9 @@ public class GameScreen extends Screen {
 			if (!this.paused)
 				for (int i = 0; i < 1 + Math.round(streak * 12); i++)
 					this.spaceStars.update();
+			// Planet and nebula once out of hyperspace (KAN-57).
+			if (streak <= 0f)
+				drawManager.drawSpaceScenery(this, System.currentTimeMillis());
 			drawManager.drawSpaceBackground(this, this.spaceStars, streak);
 		}
 

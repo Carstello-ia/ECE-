@@ -23,6 +23,42 @@ public final class SpaceOpera {
 	/** The enemy's side. */
 	public static final String ENEMY_FACTION = "OBSIDIAN DOMINION";
 
+	/** Lines of the mission briefing shown before stage 1 (KAN-57). */
+	public static final String[] BRIEFING = {
+			"The war has lasted twelve cycles. One by one, the sectors fell.",
+			"",
+			"The OBSIDIAN DOMINION now rules the Varo Nebula.",
+			"Its dreadnought, the IRON VOW, waits in the last sector,",
+			"guarded by nine fleets.",
+			"",
+			"Only the FREE SQUADRON is left to break their line.",
+			"Jump from sector to sector. Destroy the Warden Frigate.",
+			"Then take down the dreadnought.",
+			"",
+			"Good luck, pilot." };
+	/** Characters typed per second in the briefing. */
+	public static final int BRIEFING_CHARS_PER_SECOND = 45;
+
+	/**
+	 * Number of briefing characters shown after some time, for the
+	 * typewriter effect.
+	 *
+	 * @param elapsed
+	 *            Time since the briefing opened, in ms.
+	 * @return Characters to show, counted over all lines.
+	 */
+	public static int briefingCharsShown(final long elapsed) {
+		return (int) (Math.max(0, elapsed) * BRIEFING_CHARS_PER_SECOND / 1000);
+	}
+
+	/** @return Total number of characters of the briefing. */
+	public static int briefingLength() {
+		int total = 0;
+		for (String line : BRIEFING)
+			total += line.length();
+		return total;
+	}
+
 	/** Sector of each stage of the run, stage 1 first. */
 	private static final String[] SECTORS = { "VARO NEBULA",
 			"HELIX GATE", "ASHFALL DRIFT", "CINDER REACH",

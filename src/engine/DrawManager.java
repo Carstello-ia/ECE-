@@ -373,6 +373,16 @@ public final class DrawManager {
 				AlphaComposite.SRC_OVER, alpha * baseAlpha));
 
 		// If the entity is a Bullet fired by the PLAYER (speed < 0), stretch its sprite to match its actual dimensions.
+		// Space Opera: shots are glowing laser bolts (Team ECE - KAN-57).
+		if (entity instanceof entity.Bullet && this.playerLaserColor != null) {
+			boolean player = ((entity.Bullet) entity).getSpeed() < 0;
+			drawLaserBolt(g2d, positionX, positionY, entity.getWidth(),
+					entity.getHeight(), player ? this.playerLaserColor
+							: this.enemyLaserColor, alpha * baseAlpha);
+			g2d.setComposite(previous);
+			return;
+		}
+
 		if (entity instanceof entity.Bullet && ((entity.Bullet) entity).getSpeed() < 0) {
 			boolean[][] image = spriteMap.get(entity.getSpriteType());
 			if (image != null && image.length > 0) {
@@ -2069,6 +2079,102 @@ public final class DrawManager {
 	 * @param streak
 	 *            Streak length factor, 0 for plain stars.
 	 */
+	/**
+	 * Draws one laser bolt: a soft coloured glow around a thin, almost
+	 * white core, longer than the bullet so it reads as a beam (Team ECE -
+	 * KAN-57).
+	 */
+	private static void drawLaserBolt(final Graphics2D g2d, final int x,
+			final int y, final int width, final int height, final Color color,
+			final float alpha) {
+		int length = Math.max(12, height + 6);
+		int centerX = x + width / 2;
+		int top = y + height / 2 - length / 2;
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+				0.35f * alpha));
+		g2d.setColor(color);
+		g2d.fillRoundRect(centerX - 3, top - 2, 6, length + 4, 6, 6);
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+				alpha));
+		g2d.fillRoundRect(centerX - 2, top, 4, length, 4, 4);
+		g2d.setColor(new Color(Math.min(255, color.getRed() + 150),
+				Math.min(255, color.getGreen() + 150),
+				Math.min(255, color.getBlue() + 150)));
+		g2d.fillRect(centerX - 1, top + 1, 2, length - 2);
+	}
+
+	/**
+	 * Draws the far scenery of the Space Opera mode behind the stars: a
+	 * nebula, a ringed planet and its moon, drifting slowly (Team ECE -
+	 * KAN-57).
+	 *
+	 * @param screen
+	 *            Screen to draw on.
+	 * @param now
+	 *            Current time in ms, for the slow drift.
+	 */
+	public void drawSpaceScenery(final Screen screen, final long now) {
+		Graphics2D g2d = (Graphics2D) backBufferGraphics;
+		java.awt.Composite previous = g2d.getComposite();
+		java.awt.Paint previousPaint = g2d.getPaint();
+		java.awt.RenderingHints hints = g2d.getRenderingHints();
+		g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+				java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+		int w = screen.getWidth();
+		int h = screen.getHeight();
+		float drift = (now / 120) % 4000 / 4000f;
+
+		// Nebula: a few large, very faint colour clouds.
+		float[][] clouds = { { 0.25f, 0.30f, 170, 0.10f }, { 0.75f, 0.20f, 140, 0.08f },
+				{ 0.55f, 0.55f, 190, 0.06f } };
+		Color[] cloudColors = { new Color(110, 40, 160), new Color(30, 90, 170),
+				new Color(150, 40, 80) };
+		for (int i = 0; i < clouds.length; i++) {
+			int r = (int) clouds[i][2];
+			int cx = (int) (clouds[i][0] * w);
+			int cy = (int) (clouds[i][1] * h + drift * 40);
+			g2d.setPaint(new java.awt.RadialGradientPaint(cx, cy, r,
+					new float[] { 0f, 1f }, new Color[] {
+							new Color(cloudColors[i].getRed(),
+									cloudColors[i].getGreen(),
+									cloudColors[i].getBlue(),
+									(int) (255 * clouds[i][3])),
+							new Color(0, 0, 0, 0) }));
+			g2d.fillOval(cx - r, cy - r, 2 * r, 2 * r);
+		}
+
+		// Ringed planet, half out of the screen in the lower right.
+		int pr = 110;
+		int px = w - 60;
+		int py = h - 120 + (int) (drift * 20);
+		g2d.setPaint(new java.awt.RadialGradientPaint(px - pr / 3,
+				py - pr / 3, pr * 1.4f, new float[] { 0f, 0.6f, 1f },
+				new Color[] { new Color(200, 120, 70), new Color(110, 50, 40),
+						new Color(20, 10, 20) }));
+		g2d.fillOval(px - pr, py - pr, 2 * pr, 2 * pr);
+		g2d.setPaint(previousPaint);
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+				0.55f));
+		g2d.setStroke(new java.awt.BasicStroke(3f));
+		g2d.setColor(new Color(230, 190, 140));
+		g2d.drawOval(px - pr - 70, py - 18, 2 * pr + 140, 36);
+		g2d.setStroke(new java.awt.BasicStroke(1f));
+
+		// Small grey moon on the other side.
+		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+				0.8f));
+		int mx = 60;
+		int my = 320 + (int) (drift * 30);
+		g2d.setPaint(new java.awt.RadialGradientPaint(mx - 5, my - 5, 26,
+				new float[] { 0f, 1f }, new Color[] { new Color(170, 170, 180),
+						new Color(40, 40, 50) }));
+		g2d.fillOval(mx - 16, my - 16, 32, 32);
+
+		g2d.setPaint(previousPaint);
+		g2d.setComposite(previous);
+		g2d.setRenderingHints(hints);
+	}
+
 	public void drawSpaceBackground(final Screen screen,
 			final screen.Starfield starfield, final float streak) {
 		int centerX = screen.getWidth() / 2;
